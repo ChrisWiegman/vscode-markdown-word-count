@@ -1,0 +1,76 @@
+{
+  "name": "cw-markdown-word-count",
+  "displayName": "VS Code Markdown Word Count",
+  "description": "Shows word and character counts for Markdown files, including frontmatter field breakdowns.",
+  "version": "0.1.0",
+  "publisher": "chriswiegman",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChrisWiegman/vscode-markdown-word-count.git"
+  },
+  "homepage": "https://github.com/ChrisWiegman/vscode-markdown-word-count#readme",
+  "bugs": {
+    "url": "https://github.com/ChrisWiegman/vscode-markdown-word-count/issues"
+  },
+  "engines": {
+    "vscode": "^1.115.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "word count",
+    "character count",
+    "writing",
+    "frontmatter",
+    "wordcount",
+    "stats"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "main": "./out/src/extension.js",
+  "icon": "assets/icon.png",
+  "contributes": {
+    "commands": [
+      {
+        "command": "markdownWordCount.showDetails",
+        "title": "Markdown Word Count: Show Details"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && mocha",
+    "test:extension": "npm run compile && node ./out/test/runTests.js",
+    "lint": "biome lint src test"
+  },
+  "mocha": {
+    "spec": "out/test/parser.test.js",
+    "timeout": 5000
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.11",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^25.6.0",
+    "@types/sinon": "^21.0.1",
+    "@types/vscode": "^1.115.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.7.1",
+    "changie": "^1.24.0",
+    "mocha": "^11.7.5",
+    "sinon": "^21.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.2"
+  },
+  "overrides": {
+    "diff": "^8.0.4",
+    "encoding-sniffer": "^1.0.2",
+    "glob": "^13.0.6",
+    "serialize-javascript": "^7.0.5"
+  }
+}
