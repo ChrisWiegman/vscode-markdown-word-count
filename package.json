@@ -39,7 +39,39 @@
         "command": "markdownWordCount.showDetails",
         "title": "Markdown Word Count: Show Details"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Markdown Word Count",
+      "properties": {
+        "markdownWordCount.minWordCount": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Minimum word count target. The status bar shows in the below-minimum color until this count is reached, then switches to the in-range color. Set to 0 to disable."
+        },
+        "markdownWordCount.maxWordCount": {
+          "type": "number",
+          "default": 0,
+          "minimum": 0,
+          "description": "Maximum word count limit. The status bar shows in the in-range color until this count is exceeded, then switches to the above-maximum color. Set to 0 to disable."
+        },
+        "markdownWordCount.colorBelowMin": {
+          "type": "string",
+          "default": "#f44747",
+          "description": "Status bar text color when the word count is below the minimum. Accepts hex color values (e.g. #f44747)."
+        },
+        "markdownWordCount.colorAboveMax": {
+          "type": "string",
+          "default": "#f44747",
+          "description": "Status bar text color when the word count exceeds the maximum. Accepts hex color values (e.g. #f44747)."
+        },
+        "markdownWordCount.colorInRange": {
+          "type": "string",
+          "default": "#89d185",
+          "description": "Status bar text color when the word count is within the configured range. Accepts hex color values (e.g. #89d185)."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
