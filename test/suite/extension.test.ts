@@ -144,4 +144,193 @@ suite('Extension', () => {
       assert.strictEqual(stub.callCount, 0);
     });
   });
+
+  suite('word count color and arrow indicators', () => {
+    // 4-word document used across all sub-suites
+    setup(async () => {
+      const doc = await vscode.workspace.openTextDocument({
+        content: 'Hello world foo bar',
+        language: 'markdown',
+      });
+      await vscode.window.showTextDocument(doc);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    });
+
+    teardown(async () => {
+      const config = vscode.workspace.getConfiguration('markdownWordCount');
+      await config.update('minWordCount', undefined, vscode.ConfigurationTarget.Global);
+      await config.update('maxWordCount', undefined, vscode.ConfigurationTarget.Global);
+      await config.update('colorBelowMin', undefined, vscode.ConfigurationTarget.Global);
+      await config.update('colorAboveMax', undefined, vscode.ConfigurationTarget.Global);
+      await config.update('colorInRange', undefined, vscode.ConfigurationTarget.Global);
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    });
+
+    test('no color when no limits are configured', () => {
+      assert.strictEqual(ext.exports.statusBarItem.color, undefined);
+    });
+
+    test('no arrow when no limits are configured', () => {
+      assert.match(ext.exports.statusBarItem.text, /4 Words$/);
+    });
+
+    suite('only minWordCount set, count below minimum', () => {
+      setup(async () => {
+        await vscode.workspace
+          .getConfiguration('markdownWordCount')
+          .update('minWordCount', 10, vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('uses below-min color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#f44747');
+      });
+
+      test('shows no arrow (only one limit set)', () => {
+        assert.match(ext.exports.statusBarItem.text, /4 Words$/);
+      });
+    });
+
+    suite('only minWordCount set, count at or above minimum', () => {
+      setup(async () => {
+        await vscode.workspace
+          .getConfiguration('markdownWordCount')
+          .update('minWordCount', 3, vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('uses in-range color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#89d185');
+      });
+
+      test('shows no arrow (only one limit set)', () => {
+        assert.match(ext.exports.statusBarItem.text, /4 Words$/);
+      });
+    });
+
+    suite('only maxWordCount set, count at or below maximum', () => {
+      setup(async () => {
+        await vscode.workspace
+          .getConfiguration('markdownWordCount')
+          .update('maxWordCount', 10, vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('uses in-range color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#89d185');
+      });
+
+      test('shows no arrow (only one limit set)', () => {
+        assert.match(ext.exports.statusBarItem.text, /4 Words$/);
+      });
+    });
+
+    suite('only maxWordCount set, count above maximum', () => {
+      setup(async () => {
+        await vscode.workspace
+          .getConfiguration('markdownWordCount')
+          .update('maxWordCount', 3, vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('uses above-max color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#f44747');
+      });
+
+      test('shows no arrow (only one limit set)', () => {
+        assert.match(ext.exports.statusBarItem.text, /4 Words$/);
+      });
+    });
+
+    suite('both limits set, count below minimum', () => {
+      setup(async () => {
+        const config = vscode.workspace.getConfiguration('markdownWordCount');
+        await config.update('minWordCount', 10, vscode.ConfigurationTarget.Global);
+        await config.update('maxWordCount', 20, vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('uses below-min color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#f44747');
+      });
+
+      test('shows down arrow', () => {
+        assert.match(ext.exports.statusBarItem.text, /↓ 4 Words$/);
+      });
+    });
+
+    suite('both limits set, count in range', () => {
+      setup(async () => {
+        const config = vscode.workspace.getConfiguration('markdownWordCount');
+        await config.update('minWordCount', 3, vscode.ConfigurationTarget.Global);
+        await config.update('maxWordCount', 10, vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('uses in-range color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#89d185');
+      });
+
+      test('shows no arrow', () => {
+        assert.match(ext.exports.statusBarItem.text, /4 Words$/);
+      });
+    });
+
+    suite('both limits set, count above maximum', () => {
+      setup(async () => {
+        const config = vscode.workspace.getConfiguration('markdownWordCount');
+        await config.update('minWordCount', 1, vscode.ConfigurationTarget.Global);
+        await config.update('maxWordCount', 3, vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('uses above-max color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#f44747');
+      });
+
+      test('shows up arrow', () => {
+        assert.match(ext.exports.statusBarItem.text, /↑ 4 Words$/);
+      });
+    });
+
+    suite('custom colors', () => {
+      setup(async () => {
+        const config = vscode.workspace.getConfiguration('markdownWordCount');
+        await config.update('minWordCount', 10, vscode.ConfigurationTarget.Global);
+        await config.update('maxWordCount', 20, vscode.ConfigurationTarget.Global);
+        await config.update('colorBelowMin', '#aabbcc', vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('applies custom below-min color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#aabbcc');
+      });
+    });
+
+    suite('custom in-range color', () => {
+      setup(async () => {
+        const config = vscode.workspace.getConfiguration('markdownWordCount');
+        await config.update('minWordCount', 3, vscode.ConfigurationTarget.Global);
+        await config.update('colorInRange', '#00ff00', vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('applies custom in-range color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#00ff00');
+      });
+    });
+
+    suite('custom above-max color', () => {
+      setup(async () => {
+        const config = vscode.workspace.getConfiguration('markdownWordCount');
+        await config.update('maxWordCount', 3, vscode.ConfigurationTarget.Global);
+        await config.update('colorAboveMax', '#ff00ff', vscode.ConfigurationTarget.Global);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      });
+
+      test('applies custom above-max color', () => {
+        assert.strictEqual(ext.exports.statusBarItem.color, '#ff00ff');
+      });
+    });
+  });
 });
