@@ -82,6 +82,30 @@ suite('Extension', () => {
       const message = String(stub.firstCall.args[0]);
       assert.ok(message.includes('4 words'), `Message was: ${message}`);
     });
+
+    test('status bar displays selection word count after full count', async () => {
+      const editor = vscode.window.activeTextEditor;
+      assert.ok(editor);
+      editor.selection = new vscode.Selection(0, 0, 0, 11);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      assert.match(ext.exports.statusBarItem.text, /4 \/ 2 Words/);
+    });
+
+    test('showDetails command includes selection count', async () => {
+      const editor = vscode.window.activeTextEditor;
+      assert.ok(editor);
+      editor.selection = new vscode.Selection(0, 0, 0, 11);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const stub = sandbox.stub(vscode.window, 'showInformationMessage').resolves(undefined);
+
+      await Promise.resolve(vscode.commands.executeCommand(COMMAND_ID));
+
+      assert.strictEqual(stub.callCount, 1);
+      const message = String(stub.firstCall.args[0]);
+      assert.ok(message.includes('Content: 4 words'), `Message was: ${message}`);
+      assert.ok(message.includes('Selection: 2 words'), `Message was: ${message}`);
+    });
   });
 
   suite('with an active markdown editor that has frontmatter', () => {
@@ -119,6 +143,40 @@ suite('Extension', () => {
       const message = String(stub.firstCall.args[0]);
       assert.ok(message.includes('Frontmatter:'), `Message was: ${message}`);
       assert.ok(message.includes('title:'), `Message was: ${message}`);
+    });
+  });
+
+  suite('with frontmatter word count limits', () => {
+    teardown(async () => {
+      const config = vscode.workspace.getConfiguration('markdownWordCount');
+      await config.update('minWordCount', undefined, vscode.ConfigurationTarget.Global);
+      await config.update('maxWordCount', undefined, vscode.ConfigurationTarget.Global);
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    });
+
+    test('uses min-word-count frontmatter for below-min highlighting', async () => {
+      const doc = await vscode.workspace.openTextDocument({
+        content: '---\nmin-word-count: 10\n---\nHello world foo bar',
+        language: 'markdown',
+      });
+      await vscode.window.showTextDocument(doc);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      assert.strictEqual(ext.exports.statusBarItem.color, '#f44747');
+    });
+
+    test('frontmatter limits override workspace settings', async () => {
+      const config = vscode.workspace.getConfiguration('markdownWordCount');
+      await config.update('minWordCount', 10, vscode.ConfigurationTarget.Global);
+      await config.update('maxWordCount', 20, vscode.ConfigurationTarget.Global);
+      const doc = await vscode.workspace.openTextDocument({
+        content: '---\nmin-word-count: 3\nmax-word-count: 10\n---\nHello world foo bar',
+        language: 'markdown',
+      });
+      await vscode.window.showTextDocument(doc);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      assert.strictEqual(ext.exports.statusBarItem.color, '#89d185');
     });
   });
 

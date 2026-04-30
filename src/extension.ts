@@ -1,9 +1,48 @@
 import * as vscode from 'vscode';
 import { ParsedMarkdown, parseMarkdown } from './parser';
 
-function buildDetails(parsed: ParsedMarkdown): string[] {
+interface WordCountLimits {
+  minWords: number;
+  maxWords: number;
+}
+
+function parsePositiveInteger(value: string): number {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function getFrontmatterWordCountLimit(parsed: ParsedMarkdown, key: string): number {
+  const field = parsed.frontmatterFields.find((item) => item.key === key);
+  return field ? parsePositiveInteger(field.value) : 0;
+}
+
+function getWordCountLimits(parsed: ParsedMarkdown): WordCountLimits {
+  const config = vscode.workspace.getConfiguration('markdownWordCount');
+  const configuredMinWords = config.get<number>('minWordCount', 0);
+  const configuredMaxWords = config.get<number>('maxWordCount', 0);
+  const frontmatterMinWords = getFrontmatterWordCountLimit(parsed, 'min-word-count');
+  const frontmatterMaxWords = getFrontmatterWordCountLimit(parsed, 'max-word-count');
+
+  return {
+    minWords: frontmatterMinWords || configuredMinWords,
+    maxWords: frontmatterMaxWords || configuredMaxWords,
+  };
+}
+
+function getSelectedText(editor: vscode.TextEditor): string {
+  return editor.selections
+    .filter((selection) => !selection.isEmpty)
+    .map((selection) => editor.document.getText(selection))
+    .join('\n');
+}
+
+function buildDetails(parsed: ParsedMarkdown, selectedParsed?: ParsedMarkdown): string[] {
   const lines: string[] = [];
   lines.push(`Content: ${parsed.contentWords} words, ${parsed.contentChars} chars`);
+
+  if (selectedParsed) {
+    lines.push(`Selection: ${selectedParsed.contentWords} words, ${selectedParsed.contentChars} chars`);
+  }
 
   if (parsed.hasFrontmatter && parsed.frontmatterFields.length > 0) {
     lines.push('');
@@ -37,10 +76,11 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     const text = editor.document.getText();
     const parsed = parseMarkdown(text);
     const wordCount = parsed.contentWords;
+    const selectedText = getSelectedText(editor);
+    const selectedParsed = selectedText ? parseMarkdown(selectedText) : undefined;
 
+    const { minWords, maxWords } = getWordCountLimits(parsed);
     const config = vscode.workspace.getConfiguration('markdownWordCount');
-    const minWords = config.get<number>('minWordCount', 0);
-    const maxWords = config.get<number>('maxWordCount', 0);
     const colorBelowMin = config.get<string>('colorBelowMin', '#f44747');
     const colorAboveMax = config.get<string>('colorAboveMax', '#f44747');
     const colorInRange = config.get<string>('colorInRange', '#89d185');
@@ -67,8 +107,11 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     }
 
     statusBarItem.color = color;
-    statusBarItem.text = `$(book) ${arrow}${wordCount} Words`;
-    statusBarItem.tooltip = buildDetails(parsed).join('\n');
+    const countText = selectedParsed
+      ? `${wordCount} / ${selectedParsed.contentWords}`
+      : `${wordCount}`;
+    statusBarItem.text = `$(book) ${arrow}${countText} Words`;
+    statusBarItem.tooltip = buildDetails(parsed, selectedParsed).join('\n');
     statusBarItem.show();
   }
 
@@ -82,8 +125,10 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
 
       const text = editor.document.getText();
       const parsed = parseMarkdown(text);
+      const selectedText = getSelectedText(editor);
+      const selectedParsed = selectedText ? parseMarkdown(selectedText) : undefined;
 
-      vscode.window.showInformationMessage(buildDetails(parsed).join('\n'));
+      vscode.window.showInformationMessage(buildDetails(parsed, selectedParsed).join('\n'));
     })
   );
 
@@ -98,6 +143,14 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
         event.document === vscode.window.activeTextEditor.document
       ) {
         updateStatusBar(vscode.window.activeTextEditor);
+      }
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeTextEditorSelection((event) => {
+      if (event.textEditor === vscode.window.activeTextEditor) {
+        updateStatusBar(event.textEditor);
       }
     })
   );
