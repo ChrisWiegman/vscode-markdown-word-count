@@ -106,6 +106,18 @@ suite('Extension', () => {
       assert.ok(message.includes('Content: 4 words'), `Message was: ${message}`);
       assert.ok(message.includes('Selection: 2 words'), `Message was: ${message}`);
     });
+
+    test('status bar reverts to full count when selection is cleared', async () => {
+      const editor = vscode.window.activeTextEditor;
+      assert.ok(editor);
+      editor.selection = new vscode.Selection(0, 0, 0, 11);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      editor.selection = new vscode.Selection(0, 0, 0, 0);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      assert.match(ext.exports.statusBarItem.text, /4 Words$/);
+      assert.doesNotMatch(ext.exports.statusBarItem.text, /\//);
+    });
   });
 
   suite('with an active markdown editor that has frontmatter', () => {
@@ -163,6 +175,34 @@ suite('Extension', () => {
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       assert.strictEqual(ext.exports.statusBarItem.color, '#f44747');
+    });
+
+    test('uses max-word-count frontmatter for above-max highlighting', async () => {
+      const doc = await vscode.workspace.openTextDocument({
+        content: '---\nmax-word-count: 2\n---\nHello world foo bar',
+        language: 'markdown',
+      });
+      await vscode.window.showTextDocument(doc);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      assert.strictEqual(ext.exports.statusBarItem.color, '#f44747');
+    });
+
+    test('selection spanning frontmatter counts all selected words, not just content', async () => {
+      const doc = await vscode.workspace.openTextDocument({
+        content: '---\ntitle: hello\n---\nworld',
+        language: 'markdown',
+      });
+      await vscode.window.showTextDocument(doc);
+      const editor = vscode.window.activeTextEditor;
+      assert.ok(editor);
+      const lastLine = doc.lineCount - 1;
+      editor.selection = new vscode.Selection(0, 0, lastLine, doc.lineAt(lastLine).text.length);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+
+      // Full doc has 1 content word; selection across the whole doc (including frontmatter)
+      // should produce a higher selection count rather than re-applying frontmatter parsing.
+      assert.match(ext.exports.statusBarItem.text, /1 \/ 5 Words/);
     });
 
     test('frontmatter limits override workspace settings', async () => {

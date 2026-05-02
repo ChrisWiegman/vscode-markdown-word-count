@@ -21,56 +21,51 @@ export function countWords(text: string): number {
   return trimmed.split(/\s+/).length;
 }
 
-export function parseMarkdown(text: string): ParsedMarkdown {
+export function parseMarkdown(text: string, enableFrontmatter = true): ParsedMarkdown {
   const frontmatterFields: FrontmatterField[] = [];
   let contentText = text;
   let hasFrontmatter = false;
 
-  // Match YAML frontmatter delimited by --- at start of file
-  const frontmatterMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (enableFrontmatter) {
+    const frontmatterMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
 
-  if (frontmatterMatch) {
-    hasFrontmatter = true;
-    const yamlBlock = frontmatterMatch[1];
-    contentText = frontmatterMatch[2];
+    if (frontmatterMatch) {
+      hasFrontmatter = true;
+      const yamlBlock = frontmatterMatch[1];
+      contentText = frontmatterMatch[2];
 
-    // Parse each key: value line from YAML frontmatter
-    // Handles simple scalar values and quoted strings; skips arrays/objects
-    const lines = yamlBlock.split(/\r?\n/);
-    let currentKey: string | null = null;
-    let currentValue = '';
+      const lines = yamlBlock.split(/\r?\n/);
+      let currentKey: string | null = null;
+      let currentValue = '';
 
-    for (const line of lines) {
-      // Top-level key: value pair (not indented)
-      const keyValueMatch = line.match(/^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$/);
-      if (keyValueMatch) {
-        // Save previous key if any
-        if (currentKey !== null) {
-          const value = currentValue.trim().replace(/^["']|["']$/g, '');
-          frontmatterFields.push({
-            key: currentKey,
-            value,
-            words: countWords(value),
-            chars: value.length,
-          });
+      for (const line of lines) {
+        const keyValueMatch = line.match(/^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$/);
+        if (keyValueMatch) {
+          if (currentKey !== null) {
+            const value = currentValue.trim().replace(/^["']|["']$/g, '');
+            frontmatterFields.push({
+              key: currentKey,
+              value,
+              words: countWords(value),
+              chars: value.length,
+            });
+          }
+          currentKey = keyValueMatch[1];
+          currentValue = keyValueMatch[2];
+        } else if (currentKey !== null && line.match(/^\s+/)) {
+          currentValue += ' ' + line.trim();
         }
-        currentKey = keyValueMatch[1];
-        currentValue = keyValueMatch[2];
-      } else if (currentKey !== null && line.match(/^\s+/)) {
-        // Multi-line value continuation — append with space
-        currentValue += ' ' + line.trim();
       }
-    }
 
-    // Flush last key
-    if (currentKey !== null) {
-      const value = currentValue.trim().replace(/^["']|["']$/g, '');
-      frontmatterFields.push({
-        key: currentKey,
-        value,
-        words: countWords(value),
-        chars: value.length,
-      });
+      if (currentKey !== null) {
+        const value = currentValue.trim().replace(/^["']|["']$/g, '');
+        frontmatterFields.push({
+          key: currentKey,
+          value,
+          words: countWords(value),
+          chars: value.length,
+        });
+      }
     }
   }
 

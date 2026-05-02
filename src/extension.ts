@@ -77,7 +77,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     const parsed = parseMarkdown(text);
     const wordCount = parsed.contentWords;
     const selectedText = getSelectedText(editor);
-    const selectedParsed = selectedText ? parseMarkdown(selectedText) : undefined;
+    const selectedParsed = selectedText ? parseMarkdown(selectedText, false) : undefined;
 
     const { minWords, maxWords } = getWordCountLimits(parsed);
     const config = vscode.workspace.getConfiguration('markdownWordCount');
@@ -126,7 +126,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
       const text = editor.document.getText();
       const parsed = parseMarkdown(text);
       const selectedText = getSelectedText(editor);
-      const selectedParsed = selectedText ? parseMarkdown(selectedText) : undefined;
+      const selectedParsed = selectedText ? parseMarkdown(selectedText, false) : undefined;
 
       vscode.window.showInformationMessage(buildDetails(parsed, selectedParsed).join('\n'));
     })
@@ -147,10 +147,24 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     })
   );
 
+  let selectionDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+  context.subscriptions.push({
+    dispose: () => {
+      if (selectionDebounceTimer !== undefined) {
+        clearTimeout(selectionDebounceTimer);
+      }
+    },
+  });
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((event) => {
       if (event.textEditor === vscode.window.activeTextEditor) {
-        updateStatusBar(event.textEditor);
+        if (selectionDebounceTimer !== undefined) {
+          clearTimeout(selectionDebounceTimer);
+        }
+        selectionDebounceTimer = setTimeout(() => {
+          selectionDebounceTimer = undefined;
+          updateStatusBar(event.textEditor);
+        }, 50);
       }
     })
   );
