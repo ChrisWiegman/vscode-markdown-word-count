@@ -206,14 +206,14 @@ suite('Extension', () => {
     });
 
     test('frontmatter limits override workspace settings', async () => {
-      const config = vscode.workspace.getConfiguration('markdownWordCount');
-      await config.update('minWordCount', 10, vscode.ConfigurationTarget.Global);
-      await config.update('maxWordCount', 20, vscode.ConfigurationTarget.Global);
       const doc = await vscode.workspace.openTextDocument({
         content: '---\nmin-word-count: 3\nmax-word-count: 10\n---\nHello world foo bar',
         language: 'markdown',
       });
       await vscode.window.showTextDocument(doc);
+      const config = vscode.workspace.getConfiguration('markdownWordCount');
+      await config.update('minWordCount', 10, vscode.ConfigurationTarget.Global);
+      await config.update('maxWordCount', 20, vscode.ConfigurationTarget.Global);
       await new Promise((resolve) => setTimeout(resolve, 100));
 
       assert.strictEqual(ext.exports.statusBarItem.color, '#89d185');
