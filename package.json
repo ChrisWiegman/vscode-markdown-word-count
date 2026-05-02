@@ -2,7 +2,7 @@
   "name": "cw-markdown-word-count",
   "displayName": "VS Code Markdown Word Count",
   "description": "Shows word and character counts for Markdown files, including frontmatter field breakdowns.",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "chriswiegman",
   "license": "MIT",
   "repository": {

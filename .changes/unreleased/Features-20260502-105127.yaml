@@ -1,3 +1,0 @@
-kind: Features
-body: Add selection word count (shown as total/selection in status bar) and per-document word count limits via frontmatter min-word-count and max-word-count fields.
-time: 2026-05-02T10:51:27.751403-05:00
