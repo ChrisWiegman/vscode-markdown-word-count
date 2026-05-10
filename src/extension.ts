@@ -6,6 +6,12 @@ interface WordCountLimits {
   maxWords: number;
 }
 
+const HEX_COLOR_RE = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+
+function validHexColor(value: string, fallback: string): string {
+  return HEX_COLOR_RE.test(value) ? value : fallback;
+}
+
 function parsePositiveInteger(value: string): number {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
@@ -81,9 +87,9 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
 
     const { minWords, maxWords } = getWordCountLimits(parsed);
     const config = vscode.workspace.getConfiguration('markdownWordCount');
-    const colorBelowMin = config.get<string>('colorBelowMin', '#f44747');
-    const colorAboveMax = config.get<string>('colorAboveMax', '#f44747');
-    const colorInRange = config.get<string>('colorInRange', '#89d185');
+    const colorBelowMin = validHexColor(config.get<string>('colorBelowMin', '#f44747'), '#f44747');
+    const colorAboveMax = validHexColor(config.get<string>('colorAboveMax', '#f44747'), '#f44747');
+    const colorInRange = validHexColor(config.get<string>('colorInRange', '#89d185'), '#89d185');
 
     const hasMin = minWords > 0;
     const hasMax = maxWords > 0;
