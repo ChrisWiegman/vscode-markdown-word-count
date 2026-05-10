@@ -1,6 +1,6 @@
 {
   "name": "cw-markdown-word-count",
-  "displayName": "VS Code Markdown Word Count",
+  "displayName": "Markdown Word Counter",
   "description": "Shows word and character counts for Markdown files, including frontmatter field breakdowns.",
   "version": "0.4.0",
   "publisher": "chriswiegman",
@@ -57,18 +57,27 @@
         },
         "markdownWordCount.colorBelowMin": {
           "type": "string",
+          "format": "color-hex",
           "default": "#f44747",
-          "description": "Status bar text color when the word count is below the minimum. Accepts hex color values (e.g. #f44747)."
+          "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+          "patternErrorMessage": "Must be a hex color value (e.g. #f44747 or #f47).",
+          "description": "Status bar text color when the word count is below the minimum."
         },
         "markdownWordCount.colorAboveMax": {
           "type": "string",
+          "format": "color-hex",
           "default": "#f44747",
-          "description": "Status bar text color when the word count exceeds the maximum. Accepts hex color values (e.g. #f44747)."
+          "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+          "patternErrorMessage": "Must be a hex color value (e.g. #f44747 or #f47).",
+          "description": "Status bar text color when the word count exceeds the maximum."
         },
         "markdownWordCount.colorInRange": {
           "type": "string",
+          "format": "color-hex",
           "default": "#89d185",
-          "description": "Status bar text color when the word count is within the configured range. Accepts hex color values (e.g. #89d185)."
+          "pattern": "^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+          "patternErrorMessage": "Must be a hex color value (e.g. #89d185 or #8d5).",
+          "description": "Status bar text color when the word count is within the configured range."
         }
       }
     }
@@ -92,7 +101,7 @@
     "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.14",
+    "@biomejs/biome": "^2.4.15",
     "@types/mocha": "^10.0.10",
     "@types/node": "^25.6.2",
     "@types/sinon": "^21.0.1",
