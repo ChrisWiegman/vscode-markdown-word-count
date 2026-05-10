@@ -77,6 +77,29 @@ The extension parses YAML frontmatter delimited by `---` at the start of the fil
 
 Multi-line scalar values and quoted strings are handled correctly. Array and object fields are parsed as keys but their word counts will reflect the raw YAML, not nested structure.
 
+You can also limit the body range that contributes to the main word count by defining `begin-word-count` and/or `end-word-count` metadata tags. The values are matched exactly against the Markdown content:
+
+```markdown
+---
+begin-word-count: <!-- START-COUNT -->
+end-word-count: <!-- END-COUNT -->
+---
+
+Draft notes that are not counted.
+
+<!-- START-COUNT -->
+
+This section is counted.
+
+<!-- END-COUNT -->
+
+Appendix notes that are not counted.
+```
+
+If these metadata tags are not defined, the extension counts the whole Markdown body as usual. If only `begin-word-count` is defined, counting starts after that marker. If only `end-word-count` is defined, counting stops before that marker.
+
+Note: selection word counts are not affected by `begin-word-count` or `end-word-count` — they always reflect the raw selected text.
+
 ## Requirements
 
 VS Code 1.115.0 or newer.

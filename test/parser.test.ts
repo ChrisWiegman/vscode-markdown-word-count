@@ -111,6 +111,16 @@ describe('parseMarkdown', () => {
       const result = parseMarkdown('Hello world');
       assert.strictEqual(result.contentChars, 11);
     });
+
+    it('counts the whole document when word count boundary tags are not defined', () => {
+      const doc = `Intro words
+<!-- START-COUNT -->
+Middle words here
+<!-- END-COUNT -->
+Outro words`;
+      const result = parseMarkdown(doc);
+      assert.strictEqual(result.contentWords, 7);
+    });
   });
 
   describe('frontmatter parsing', () => {
@@ -182,6 +192,43 @@ describe('parseMarkdown', () => {
       const doc = `Some text\n---\ntitle: Not frontmatter\n---\n`;
       const result = parseMarkdown(doc);
       assert.strictEqual(result.hasFrontmatter, false);
+    });
+
+    it('counts only content between configured word count boundary tags', () => {
+      const doc = `---
+begin-word-count: <!-- START-COUNT -->
+end-word-count: <!-- END-COUNT -->
+---
+Ignored intro words
+<!-- START-COUNT -->
+Count these five words only
+<!-- END-COUNT -->
+Ignored outro words`;
+      const result = parseMarkdown(doc);
+      assert.strictEqual(result.contentWords, 5);
+    });
+
+    it('counts from the begin tag onward when only begin-word-count is defined', () => {
+      const doc = `---
+begin-word-count: <!-- START-COUNT -->
+---
+Ignored intro words
+<!-- START-COUNT -->
+Count these words
+<!-- END-COUNT -->`;
+      const result = parseMarkdown(doc);
+      assert.strictEqual(result.contentWords, 3);
+    });
+
+    it('counts up to the end tag when only end-word-count is defined', () => {
+      const doc = `---
+end-word-count: <!-- END-COUNT -->
+---
+Count these words
+<!-- END-COUNT -->
+Ignored outro words`;
+      const result = parseMarkdown(doc);
+      assert.strictEqual(result.contentWords, 3);
     });
   });
 });
