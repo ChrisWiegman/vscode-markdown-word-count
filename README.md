@@ -14,6 +14,16 @@ When a Markdown file is active, the current word count appears in the status bar
 
 The count updates live as you type and excludes Markdown syntax — heading markers, bold/italic markers, code blocks, inline code, images, HTML tags, and list markers are all stripped before counting, so only prose words are counted.
 
+### Selection Word Count
+
+When you select text, the status bar shows both the full document word count and the selection word count:
+
+```
+ 123 / 14 Words
+```
+
+The selection count updates as you adjust the selection and disappears when the selection is cleared. Multiple non-contiguous selections (multi-cursor) are counted together. The hover tooltip also gains a `Selection: N words, N chars` line when text is selected.
+
 ### Word Count Targets
 
 You can set a minimum and/or maximum word count target. When a limit is configured, the status bar text changes color to indicate whether you are within your target:
@@ -31,6 +41,19 @@ When **both** a minimum and maximum are set, a directional arrow also appears af
 ```
 
 All three colors are fully configurable to match your theme. See [Extension Settings](#extension-settings) below.
+
+#### Per-Document Limits via Frontmatter
+
+You can also set word count limits on a per-document basis by adding `min-word-count` or `max-word-count` to the file's YAML frontmatter:
+
+```yaml
+---
+min-word-count: 500
+max-word-count: 1000
+---
+```
+
+Frontmatter limits take priority over the workspace settings for that file. This is useful when different documents in the same workspace have different length targets.
 
 ### Hover Tooltip with Details
 
