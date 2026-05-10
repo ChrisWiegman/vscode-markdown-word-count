@@ -21,6 +21,32 @@ export function countWords(text: string): number {
   return trimmed.split(/\s+/).length;
 }
 
+function getFrontmatterFieldValue(fields: FrontmatterField[], key: string): string {
+  return fields.find((field) => field.key === key)?.value ?? '';
+}
+
+function getCountableContentText(contentText: string, frontmatterFields: FrontmatterField[]): string {
+  const beginMarker = getFrontmatterFieldValue(frontmatterFields, 'begin-word-count');
+  const endMarker = getFrontmatterFieldValue(frontmatterFields, 'end-word-count');
+  let countableText = contentText;
+
+  if (beginMarker) {
+    const beginIndex = countableText.indexOf(beginMarker);
+    if (beginIndex >= 0) {
+      countableText = countableText.slice(beginIndex + beginMarker.length);
+    }
+  }
+
+  if (endMarker) {
+    const endIndex = countableText.indexOf(endMarker);
+    if (endIndex >= 0) {
+      countableText = countableText.slice(0, endIndex);
+    }
+  }
+
+  return countableText;
+}
+
 export function parseMarkdown(text: string): ParsedMarkdown {
   const frontmatterFields: FrontmatterField[] = [];
   let contentText = text;
@@ -74,9 +100,11 @@ export function parseMarkdown(text: string): ParsedMarkdown {
     }
   }
 
+  const countableContentText = getCountableContentText(contentText, frontmatterFields);
+
   // Strip Markdown syntax from content for accurate word count:
   // Remove code fences, inline code, images, links (keep link text), HTML tags
-  const stripped = contentText
+  const stripped = countableContentText
     .replace(/```[\s\S]*?```/g, '')       // fenced code blocks
     .replace(/`[^`]*`/g, '')              // inline code
     .replace(/!\[.*?\]\(.*?\)/g, '')      // images

@@ -180,6 +180,24 @@ suite('Extension', () => {
     });
   });
 
+  suite('with frontmatter word count boundaries', () => {
+    teardown(async () => {
+      await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+    });
+
+    test('status bar shows only words between configured boundary tags', async () => {
+      const doc = await vscode.workspace.openTextDocument({
+        content:
+          '---\nbegin-word-count: <!-- START-COUNT -->\nend-word-count: <!-- END-COUNT -->\n---\nIgnored intro words\n<!-- START-COUNT -->\nCount these words\n<!-- END-COUNT -->\nIgnored outro words',
+        language: 'markdown',
+      });
+      await vscode.window.showTextDocument(doc);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      assert.match(ext.exports.statusBarItem.text, /3 Words/);
+    });
+  });
+
   suite('with a non-markdown editor', () => {
     setup(async () => {
       const doc = await vscode.workspace.openTextDocument({
