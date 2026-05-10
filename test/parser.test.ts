@@ -230,5 +230,27 @@ Ignored outro words`;
       const result = parseMarkdown(doc);
       assert.strictEqual(result.contentWords, 3);
     });
+
+    it('counts the whole document when a defined marker is not found in the body', () => {
+      const doc = `---
+begin-word-count: <!-- MISSING-MARKER -->
+---
+Count all five words here`;
+      const result = parseMarkdown(doc);
+      assert.strictEqual(result.contentWords, 5);
+    });
+
+    it('ignores end marker when it appears before the begin marker in the document', () => {
+      const doc = `---
+begin-word-count: <!-- START-COUNT -->
+end-word-count: <!-- END-COUNT -->
+---
+<!-- END-COUNT -->
+Ignored before start
+<!-- START-COUNT -->
+Count these three words`;
+      const result = parseMarkdown(doc);
+      assert.strictEqual(result.contentWords, 4);
+    });
   });
 });
