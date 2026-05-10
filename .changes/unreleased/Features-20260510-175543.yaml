@@ -1,0 +1,3 @@
+kind: Features
+body: Limit the body range that contributes to the main word count by defining `begin-word-count` and/or `end-word-count` metadata tags. Selection word counts are not affected by these limits. (credit @telcott)
+time: 2026-05-10T17:55:43.30816-05:00
