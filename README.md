@@ -98,6 +98,12 @@ Appendix notes that are not counted.
 
 If these metadata tags are not defined, the extension counts the whole Markdown body as usual. If only `begin-word-count` is defined, counting starts after that marker. If only `end-word-count` is defined, counting stops before that marker.
 
+If a marker is defined but its value does not appear in the document body, the marker is silently ignored and counting proceeds as if it were not set (i.e. the whole document, or the range defined by the other marker, is counted).
+
+If `end-word-count` appears in the document before `begin-word-count`, the end marker will not be found within the post-begin slice and is ignored — counting runs from the begin marker to the end of the document.
+
+Note: `begin-word-count` and `end-word-count` are treated as regular frontmatter fields and will appear in the per-field word count breakdown with word counts reflecting the marker string itself.
+
 Note: selection word counts are not affected by `begin-word-count` or `end-word-count` — they always reflect the raw selected text.
 
 ## Requirements
