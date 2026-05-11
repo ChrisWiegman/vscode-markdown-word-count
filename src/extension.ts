@@ -44,6 +44,7 @@ function getSelectedText(editor: vscode.TextEditor): string {
 
 function buildDetails(parsed: ParsedMarkdown, selectedParsed?: ParsedMarkdown): string[] {
   const lines: string[] = [];
+  
   lines.push(`Content: ${parsed.contentWords} words, ${parsed.contentChars} chars`);
 
   if (selectedParsed) {
@@ -53,6 +54,7 @@ function buildDetails(parsed: ParsedMarkdown, selectedParsed?: ParsedMarkdown): 
   if (parsed.hasFrontmatter && parsed.frontmatterFields.length > 0) {
     lines.push('');
     lines.push('Frontmatter:');
+
     for (const field of parsed.frontmatterFields) {
       lines.push(`  ${field.key}: ${field.words} words, ${field.chars} chars`);
     }
@@ -70,7 +72,9 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     vscode.StatusBarAlignment.Left,
     0
   );
+
   statusBarItem.command = 'markdownWordCount.showDetails';
+
   context.subscriptions.push(statusBarItem);
 
   function updateStatusBar(editor: vscode.TextEditor | undefined): void {
@@ -113,11 +117,14 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
     }
 
     statusBarItem.color = color;
+
     const countText = selectedParsed
       ? `${wordCount} / ${selectedParsed.contentWords}`
       : `${wordCount}`;
+
     statusBarItem.text = `$(book) ${arrow}${countText} Words`;
     statusBarItem.tooltip = buildDetails(parsed, selectedParsed).join('\n');
+
     statusBarItem.show();
   }
 
@@ -161,6 +168,7 @@ export function activate(context: vscode.ExtensionContext): ExtensionApi {
       }
     },
   });
+
   context.subscriptions.push(
     vscode.window.onDidChangeTextEditorSelection((event) => {
       if (event.textEditor === vscode.window.activeTextEditor) {

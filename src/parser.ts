@@ -15,9 +15,11 @@ export interface ParsedMarkdown {
 
 export function countWords(text: string): number {
   const trimmed = text.trim();
+
   if (!trimmed) {
     return 0;
   }
+
   return trimmed.split(/\s+/).length;
 }
 
@@ -28,10 +30,12 @@ function getFrontmatterFieldValue(fields: FrontmatterField[], key: string): stri
 function getCountableContentText(contentText: string, frontmatterFields: FrontmatterField[]): string {
   const beginMarker = getFrontmatterFieldValue(frontmatterFields, 'begin-word-count');
   const endMarker = getFrontmatterFieldValue(frontmatterFields, 'end-word-count');
+
   let countableText = contentText;
 
   if (beginMarker) {
     const beginIndex = countableText.indexOf(beginMarker);
+
     if (beginIndex >= 0) {
       countableText = countableText.slice(beginIndex + beginMarker.length);
     }
@@ -39,6 +43,7 @@ function getCountableContentText(contentText: string, frontmatterFields: Frontma
 
   if (endMarker) {
     const endIndex = countableText.indexOf(endMarker);
+
     if (endIndex >= 0) {
       countableText = countableText.slice(0, endIndex);
     }
@@ -49,6 +54,7 @@ function getCountableContentText(contentText: string, frontmatterFields: Frontma
 
 export function parseMarkdown(text: string, enableFrontmatter = true): ParsedMarkdown {
   const frontmatterFields: FrontmatterField[] = [];
+
   let contentText = text;
   let hasFrontmatter = false;
 
@@ -61,14 +67,17 @@ export function parseMarkdown(text: string, enableFrontmatter = true): ParsedMar
       contentText = frontmatterMatch[2];
 
       const lines = yamlBlock.split(/\r?\n/);
+
       let currentKey: string | null = null;
       let currentValue = '';
 
       for (const line of lines) {
         const keyValueMatch = line.match(/^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$/);
+
         if (keyValueMatch) {
           if (currentKey !== null) {
             const value = currentValue.trim().replace(/^["']|["']$/g, '');
+
             frontmatterFields.push({
               key: currentKey,
               value,
@@ -76,6 +85,7 @@ export function parseMarkdown(text: string, enableFrontmatter = true): ParsedMar
               chars: value.length,
             });
           }
+
           currentKey = keyValueMatch[1];
           currentValue = keyValueMatch[2];
         } else if (currentKey !== null && line.match(/^\s+/)) {
@@ -85,6 +95,7 @@ export function parseMarkdown(text: string, enableFrontmatter = true): ParsedMar
 
       if (currentKey !== null) {
         const value = currentValue.trim().replace(/^["']|["']$/g, '');
+
         frontmatterFields.push({
           key: currentKey,
           value,
