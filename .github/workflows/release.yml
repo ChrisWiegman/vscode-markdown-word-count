@@ -31,7 +31,9 @@ jobs:
               echo "Tag $TAG_NAME does not match package.json version $PKG_VERSION"
               exit 1
             fi
+            PKG_NAME=$(node -p "require('./package.json').name")
             echo "version=$TAG_NAME" >> $GITHUB_OUTPUT
+            echo "vsix_file=${PKG_NAME}-${TAG_NAME}.vsix" >> $GITHUB_OUTPUT
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -73,4 +75,4 @@ jobs:
         with:
           pat: ${{ secrets.VSCE_PAT }}
           registryUrl: https://marketplace.visualstudio.com
-          extensionFile: "./cw-markdown-word-count-${{ steps.vars.outputs.version }}.vsix"
+          extensionFile: "./${{ steps.vars.outputs.vsix_file }}"
