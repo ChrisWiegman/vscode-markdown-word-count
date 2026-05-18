@@ -1,130 +1,131 @@
 export interface FrontmatterField {
-  key: string;
-  value: string;
-  words: number;
-  chars: number;
+	key: string;
+	value: string;
+	words: number;
+	chars: number;
 }
 
 export interface ParsedMarkdown {
-  frontmatterFields: FrontmatterField[];
-  contentText: string;
-  contentWords: number;
-  contentChars: number;
-  hasFrontmatter: boolean;
+	frontmatterFields: FrontmatterField[];
+	contentText: string;
+	contentWords: number;
+	contentChars: number;
+	hasFrontmatter: boolean;
 }
 
 export function countWords(text: string): number {
-  const trimmed = text.trim();
+	const trimmed = text.trim();
 
-  if (!trimmed) {
-    return 0;
-  }
+	if (!trimmed) {
+		return 0;
+	}
 
-  return trimmed.split(/\s+/).length;
+	return trimmed.split(/\s+/).length;
 }
 
 function getFrontmatterFieldValue(fields: FrontmatterField[], key: string): string {
-  return fields.find((field) => field.key === key)?.value ?? '';
+	return fields.find((field) => field.key === key)?.value ?? "";
 }
 
 function getCountableContentText(contentText: string, frontmatterFields: FrontmatterField[]): string {
-  const beginMarker = getFrontmatterFieldValue(frontmatterFields, 'begin-word-count');
-  const endMarker = getFrontmatterFieldValue(frontmatterFields, 'end-word-count');
+	const beginMarker = getFrontmatterFieldValue(frontmatterFields, "begin-word-count");
+	const endMarker = getFrontmatterFieldValue(frontmatterFields, "end-word-count");
 
-  let countableText = contentText;
+	let countableText = contentText;
 
-  if (beginMarker) {
-    const beginIndex = countableText.indexOf(beginMarker);
+	if (beginMarker) {
+		const beginIndex = countableText.indexOf(beginMarker);
 
-    if (beginIndex >= 0) {
-      countableText = countableText.slice(beginIndex + beginMarker.length);
-    }
-  }
+		if (beginIndex >= 0) {
+			countableText = countableText.slice(beginIndex + beginMarker.length);
+		}
+	}
 
-  if (endMarker) {
-    const endIndex = countableText.indexOf(endMarker);
+	if (endMarker) {
+		const endIndex = countableText.indexOf(endMarker);
 
-    if (endIndex >= 0) {
-      countableText = countableText.slice(0, endIndex);
-    }
-  }
+		if (endIndex >= 0) {
+			countableText = countableText.slice(0, endIndex);
+		}
+	}
 
-  return countableText;
+	return countableText;
 }
 
 export function parseMarkdown(text: string, enableFrontmatter = true): ParsedMarkdown {
-  const frontmatterFields: FrontmatterField[] = [];
+	const frontmatterFields: FrontmatterField[] = [];
 
-  let contentText = text;
-  let hasFrontmatter = false;
+	let contentText = text;
+	let hasFrontmatter = false;
 
-  if (enableFrontmatter) {
-    const frontmatterMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+	if (enableFrontmatter) {
+		const frontmatterMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
 
-    if (frontmatterMatch) {
-      hasFrontmatter = true;
-      const yamlBlock = frontmatterMatch[1];
-      contentText = frontmatterMatch[2];
+		if (frontmatterMatch) {
+			hasFrontmatter = true;
+			const yamlBlock = frontmatterMatch[1];
 
-      const lines = yamlBlock.split(/\r?\n/);
+			contentText = frontmatterMatch[2];
 
-      let currentKey: string | null = null;
-      let currentValue = '';
+			const lines = yamlBlock.split(/\r?\n/);
 
-      for (const line of lines) {
-        const keyValueMatch = line.match(/^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$/);
+			let currentKey: string | null = null;
+			let currentValue = "";
 
-        if (keyValueMatch) {
-          if (currentKey !== null) {
-            const value = currentValue.trim().replace(/^["']|["']$/g, '');
+			for (const line of lines) {
+				const keyValueMatch = line.match(/^([A-Za-z_][A-Za-z0-9_-]*)\s*:\s*(.*)$/);
 
-            frontmatterFields.push({
-              key: currentKey,
-              value,
-              words: countWords(value),
-              chars: value.length,
-            });
-          }
+				if (keyValueMatch) {
+					if (currentKey !== null) {
+						const value = currentValue.trim().replace(/^["']|["']$/g, "");
 
-          currentKey = keyValueMatch[1];
-          currentValue = keyValueMatch[2];
-        } else if (currentKey !== null && line.match(/^\s+/)) {
-          currentValue += ' ' + line.trim();
-        }
-      }
+						frontmatterFields.push({
+							key: currentKey,
+							value,
+							words: countWords(value),
+							chars: value.length,
+						});
+					}
 
-      if (currentKey !== null) {
-        const value = currentValue.trim().replace(/^["']|["']$/g, '');
+					currentKey = keyValueMatch[1];
+					currentValue = keyValueMatch[2];
+				} else if (currentKey !== null && line.match(/^\s+/)) {
+					currentValue += " " + line.trim();
+				}
+			}
 
-        frontmatterFields.push({
-          key: currentKey,
-          value,
-          words: countWords(value),
-          chars: value.length,
-        });
-      }
-    }
-  }
+			if (currentKey !== null) {
+				const value = currentValue.trim().replace(/^["']|["']$/g, "");
 
-  const countableContentText = getCountableContentText(contentText, frontmatterFields);
+				frontmatterFields.push({
+					key: currentKey,
+					value,
+					words: countWords(value),
+					chars: value.length,
+				});
+			}
+		}
+	}
 
-  // Strip Markdown syntax from content for accurate word count:
-  // Remove code fences, inline code, images, links (keep link text), HTML tags
-  const stripped = countableContentText
-    .replace(/```[\s\S]*?```/g, '')       // fenced code blocks
-    .replace(/`[^`]*`/g, '')              // inline code
-    .replace(/!\[.*?\]\(.*?\)/g, '')      // images
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // links → keep text
-    .replace(/<[^>]+>/g, '')              // HTML tags
-    .replace(/^#{1,6}\s+/gm, '')          // headings
-    .replace(/(\*\*|__)(.*?)\1/g, '$2')  // bold
-    .replace(/(\*|_)(.*?)\1/g, '$2')     // italic
-    .replace(/~~(.*?)~~/g, '$1')         // strikethrough
-    .replace(/^\s*[-*+>]\s+/gm, '')      // list markers / blockquotes
-    .replace(/^\s*\d+\.\s+/gm, '');      // ordered list markers
+	const countableContentText = getCountableContentText(contentText, frontmatterFields);
 
-  const contentWords = countWords(stripped);
-  const contentChars = stripped.trim().length;
+	// Strip Markdown syntax from content for accurate word count:
+	// Remove code fences, inline code, images, links (keep link text), HTML tags
+	const stripped = countableContentText
+		.replace(/```[\s\S]*?```/g, "")       // fenced code blocks
+		.replace(/`[^`]*`/g, "")              // inline code
+		.replace(/!\[.*?\]\(.*?\)/g, "")      // images
+		.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // links → keep text
+		.replace(/<[^>]+>/g, "")              // HTML tags
+		.replace(/^#{1,6}\s+/gm, "")          // headings
+		.replace(/(\*\*|__)(.*?)\1/g, "$2")  // bold
+		.replace(/(\*|_)(.*?)\1/g, "$2")     // italic
+		.replace(/~~(.*?)~~/g, "$1")         // strikethrough
+		.replace(/^\s*[-*+>]\s+/gm, "")      // list markers / blockquotes
+		.replace(/^\s*\d+\.\s+/gm, "");      // ordered list markers
 
-  return { frontmatterFields, contentText, contentWords, contentChars, hasFrontmatter };
+	const contentWords = countWords(stripped);
+	const contentChars = stripped.trim().length;
+
+	return { frontmatterFields, contentText, contentWords, contentChars, hasFrontmatter };
 }
