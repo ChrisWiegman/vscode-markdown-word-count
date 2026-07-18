@@ -211,9 +211,15 @@ suite("Extension", () => {
 				language: "markdown",
 			});
 			await vscode.window.showTextDocument(doc);
+			// Let any editor-change event still in flight from the previous test's
+			// (async) closeActiveEditor teardown settle before we start asserting,
+			// otherwise it can land after showTextDocument below and steal focus.
+			await new Promise((resolve) => setTimeout(resolve, 100));
+
 			const config = vscode.workspace.getConfiguration("markdownWordCount");
 			await config.update("minWordCount", 10, vscode.ConfigurationTarget.Global);
 			await config.update("maxWordCount", 20, vscode.ConfigurationTarget.Global);
+			await vscode.window.showTextDocument(doc);
 			await new Promise((resolve) => setTimeout(resolve, 100));
 
 			assert.strictEqual(ext.exports.statusBarItem.color, "#89d185");
